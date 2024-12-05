@@ -1,0 +1,13 @@
+FROM python:3.12.1
+
+WORKDIR /usr/src/academic_journal
+
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+COPY ./academic_journal/reqs.txt .
+RUN pip install -r reqs.txt
+
+COPY . .
+
+RUN adduser --disabled-password --gecos '' myuser
