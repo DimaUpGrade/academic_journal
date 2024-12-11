@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
 
@@ -7,18 +7,26 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework import generics, status, viewsets
 
+from django_filters.rest_framework import DjangoFilterBackend
+
 import rest_framework.permissions as perms
 
-from serializers import UserRegistrationSerializer
-from serializers import UserLoginSerializer
-from serializers import UsernameSerializer
-from serializers import LessonSerializer
+from .serializers import UserRegistrationSerializer
+from .serializers import UserLoginSerializer
+from .serializers import UsernameSerializer
+from .serializers import LessonSerializer
+from .serializers import GroupSerializer
+from .serializers import RankSerializer
+from .serializers import StudentSerializer
+from .serializers import SubjectSerializer
+from .serializers import SemesterSerializer
+from .serializers import CreateLessonSerializer
 
-from models import Student
-from models import Group
-from models import Rank
-from models import Lesson
-from models import Subject
+from .models import Student
+from .models import Group
+from .models import Rank
+from .models import Lesson
+from .models import Subject
 
 
 class UserRegistration(APIView):
@@ -69,3 +77,46 @@ class UserLogout(APIView):
     def post(self, request):
         logout(request)
         return Response(status=status.HTTP_200_OK)
+
+
+class GroupListAPIView(generics.ListAPIView):
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+    filter_backends = (DjangoFilterBackend, )
+
+
+class SubjectListAPIView(generics.ListAPIView):
+    queryset = Subject.objects.all()
+    serializer_class = SubjectSerializer
+    filter_backends = (DjangoFilterBackend, )
+
+
+class LessonViewSet(viewsets.ModelViewSet):
+    # Потестить отображение, семестр можно не возвращать обратно пользователю, как и группу
+    queryset = Lesson.objects.select_related('semester', 'subject', 'group').prefetch_related('visits', 'ranks')
+    serializer_class = LessonSerializer
+    create_serializer_class = CreateLessonSerializer
+    filter_backends = (DjangoFilterBackend, )
+
+    def list(self, request, *args, **kwargs):
+        if request.GET.get('teacher') and request.GET.get('semester') and request.GET.get('group') and request.GET.get('subject'):
+            queryset = self.get_queryset().filter(
+                teacher=request.GET.get('teacher'),
+                semester=request.GET.get('semester'),
+                group=request.GET.get('group'),
+                subject=request.GET.get('subject')
+                )
+            
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        else:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+    # def retrieve(self, request, *args, **kwargs):
+    #     pk = self.kwargs.get("pk")
+    #     lesson = get_object_or_404(Lesson, pk=pk)
+
+        
+        
+        
+

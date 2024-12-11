@@ -1,6 +1,18 @@
 from django.db import models
 
 
+#
+# Default Django User model (i.e. auth.models.User class)
+# has atributes:
+#
+# username
+# email
+# first_name
+# last_name
+# date_joined
+# last_login
+#
+
 # class Teacher(models.Model):
 #     email = models.EmailField()
 #     firstname = models.CharField()
@@ -28,31 +40,40 @@ class Subject(models.Model):
 
 class Lesson(models.Model):
     date = models.DateField()
-    order_in_day = models.IntegerField(max_length=1)
-    subject = models.ForeignKey("Subject", related_name="subject_lesson")
-    # teacher = models.ForeignKey("Teacher", related_name="teacher_lesson")
-    teacher = models.ForeignKey("auth.User", related_name="teacher_lesson")
-    group = models.ForeignKey("Group", related_name="group_lesson")
+    order_in_day = models.IntegerField()
+    semester = models.ForeignKey("Semester", related_name="semester_lesson", on_delete=models.CASCADE)
+    subject = models.ForeignKey("Subject", related_name="subject_lesson", on_delete=models.CASCADE)
+    teacher = models.ForeignKey("auth.User", related_name="teacher_lesson", on_delete=models.CASCADE)
+    group = models.ForeignKey("Group", related_name="group_lesson", on_delete=models.CASCADE)
     visits = models.ManyToManyField("Student", blank=True, related_name="lesson_visits")
-    ranks = models.ManyToManyField("Rank", blank=True, related_name="lesson_ranks")
 
     def __str__(self):
-        return f"{self.date}, {self.order_in_day}"
+        return f"{self.date}, {self.order_in_day} пара, {self.subject.title}, {self.group.title}"
 
 
 class Student(models.Model):
     firstname = models.CharField()
     lastname = models.CharField()
     secondname = models.CharField(null=True, blank=True)
-    group = models.ForeignKey("Group", related_name="group_student")
+    group = models.ForeignKey("Group", related_name="group_student", on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{self.firstname} {self.lastname} {self.secondname}"
 
 
 class Rank(models.Model):
-    student = models.ForeignKey("Student", related_name="student_rank")
-    rank = models.IntegerField(max_length=1)
+    lesson = models.ForeignKey("Lesson", related_name="lesson_rank", on_delete=models.CASCADE, default=None)
+    student = models.ForeignKey("Student", related_name="student_rank", on_delete=models.CASCADE)
+    rank = models.IntegerField()
 
     def __str__(self):
         return f"{self.student}, {self.rank}"
+    
+
+class Semester(models.Model):
+    start_year = models.IntegerField()
+    end_year = models.IntegerField()
+    semester_number = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.start_year}-{self.end_year}, {self.semester_number}-й семестр"

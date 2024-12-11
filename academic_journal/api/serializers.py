@@ -1,9 +1,10 @@
 from rest_framework import serializers
-from models import Student
-from models import Group
-from models import Rank
-from models import Lesson
-from models import Subject
+from .models import Student
+from .models import Group
+from .models import Rank
+from .models import Lesson
+from .models import Subject
+from .models import Semester
 from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
@@ -78,8 +79,7 @@ class LessonSerializer(serializers.ModelSerializer):
         visits = StudentSerializer(many=True, read_only=False)
         teacher = UserFullSerializer(many=False, read_only=False)
         subject = SubjectSerializer(many=False, read_only=False)
-        ranks = RankSerializer(many=True, read_only=False)
-        fields = ("teacher", "subject", "visits", "ranks", "date", "order_in_day")
+        fields = ("teacher", "subject", "visits", "date", "order_in_day")
 
         
 class CreateLessonSerializer(serializers.ModelSerializer):
@@ -88,7 +88,13 @@ class CreateLessonSerializer(serializers.ModelSerializer):
         teacher = UserFullSerializer(many=False, read_only=False)
         subject = SubjectSerializer(many=False, read_only=False)
         fields = ("teacher", "subject", "date", "order_in_day")
-        
+
+
+class SemesterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Semester
+        fields = "__all__"
+
 
 # class CreateRankSerializer(serializers.ModelSerializer):
 #     class Meta:

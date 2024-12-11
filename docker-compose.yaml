@@ -25,3 +25,12 @@ services:
       - db
     env_file:
       - ./.env
+  frontend:
+    build:
+      dockerfile: ./academic_journal_frontend/Dockerfile
+    volumes:
+      - ./academic_journal_frontend:/usr/src/academic_journal_frontend/
+    ports:
+      - 11000:80
+    depends_on:
+      - backend
