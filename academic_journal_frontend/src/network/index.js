@@ -31,6 +31,8 @@ async function loginAccount(username_, password_) {
         .then((response) => {
             localStorage.setItem("token", response.data['Token']);
             localStorage.setItem("username", username_);
+            localStorage.setItem("last_name", response.data['last_name']);
+            localStorage.setItem("first_name", response.data['first_name']);
             router.back();
         })
         .catch((error) => {
@@ -42,7 +44,7 @@ async function loginAccount(username_, password_) {
 
 
 // WIP
-async function registrationAccount(username_, password_, email_) {
+async function registrationAccount(username_, last_name_, first_name_, password_, email_) {
     let result;
     result = await axios({
         method: 'post',
@@ -50,6 +52,8 @@ async function registrationAccount(username_, password_, email_) {
         headers: {},
         data: {
             username: username_,
+            last_name: last_name_,
+            first_name: first_name_,
             password: password_,
             email: email_
         }
@@ -83,6 +87,8 @@ async function logout() {
             }).then(function () {
                 localStorage.removeItem("token");
                 localStorage.removeItem("username");
+                localStorage.removeItem("last_name");
+                localStorage.removeItem("first_name");
                 router.go();
             });
             // alert("Успешный выход!");
@@ -99,4 +105,13 @@ async function logout() {
                 });
             }
         })
+}
+
+
+export {
+    API_URL,
+    axios,
+    loginAccount,
+    registrationAccount,
+    logout
 }

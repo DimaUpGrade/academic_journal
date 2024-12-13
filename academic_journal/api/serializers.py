@@ -19,7 +19,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user_obj = User.objects.create_user(email=validated_data['email'], username=validated_data['username'],
-                                            password=validated_data['password'])
+                                            password=validated_data['password'], first_name=validated_data['first_name'], last_name=validated_data['last_name'])
         user_obj.save()
         token = Token.objects.create(user=user_obj)
         return user_obj

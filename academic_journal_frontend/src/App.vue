@@ -1,5 +1,32 @@
-<script setup>
-import { RouterLink, RouterView } from 'vue-router'
+<script>
+import { RouterLink, RouterView } from 'vue-router';
+import { tokenIsSet } from './service';
+import { logout } from './network';
+
+export default{
+  methods: {
+    toLogOut() {
+      logout();
+    }
+  },
+  data() {
+    return {
+      username: null,
+      isAuth: null
+    }
+  },
+  created() {
+    // this.isAuth = tokenIsSet();
+    if (tokenIsSet()) {
+      this.isAuth = true;
+      this.username = localStorage.getItem('username')
+    }
+    else {
+      this.isAuth = false;
+    }
+  }
+}
+
 </script>
 
 <template>
@@ -7,8 +34,9 @@ import { RouterLink, RouterView } from 'vue-router'
     <div class="nav-wrapper">
       <nav class="navbar">
         <RouterLink to="/" class="link_reset">Home</RouterLink>
-        <RouterLink to="/registration" class="link_reset">Регистрация</RouterLink>
-        <RouterLink to="/login" class="link_reset">Авторизация</RouterLink>
+        <RouterLink to="/registration" class="link_reset" v-if="isAuth === false">Регистрация</RouterLink>
+        <RouterLink to="/login" class="link_reset" v-if="isAuth === false">Авторизация</RouterLink>
+        <button id="logout-button" @click="toLogOut">Выйти</button>
       </nav>
     </div>
   </header>
@@ -51,7 +79,7 @@ import { RouterLink, RouterView } from 'vue-router'
   .navbar a {
     text-decoration: none;
     color: var(--white-smoke);
-    font-size: 20px;
+    font-size: 1.5em;
     padding: 1vh 1vw;
   }
 
@@ -68,7 +96,7 @@ import { RouterLink, RouterView } from 'vue-router'
     justify-content: center;
     background-color: var(--amethyst);
     color: var(--white-smoke);
-    padding: 100px;
+    padding: 50px 70px 100px 70px;
     border-radius: 10px;
   }
 
@@ -81,7 +109,7 @@ import { RouterLink, RouterView } from 'vue-router'
     border: 0px;
   }
 
-  .default-button:hover {
+  .default-button:hover, #logout-button:hover {
     background-color: var(--white-smoke);
     color: var(--dpurple);
     cursor: pointer;
@@ -91,4 +119,24 @@ import { RouterLink, RouterView } from 'vue-router'
     min-width: 200px;
   }
 
+  h1 {
+    font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    -webkit-text-stroke: 2.5px var(--black);
+    font-size: 56px;
+  }
+
+  h2 {
+    font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    -webkit-text-stroke: 1.5px var(--black);
+    font-size: 35px;
+  }
+
+  #logout-button {
+    color: var(--white-smoke);
+    background-color: transparent;
+    border: none;
+    font-size: 1.5em;
+    font-family: 'Times New Roman', Times, serif;
+    padding: 1vh 1vw;
+  }
 </style>

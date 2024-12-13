@@ -7,8 +7,6 @@ python manage.py makemigrations
 # migrate db, so we have the latest db schema
 python manage.py migrate
 
-1
-
 # Creating superuser
 # python manage.py createsuperuser --noinput --username $DJANGO_SUPERUSER_USERNAME --email $DJANGO_SUPERUSER_EMAIL 
 

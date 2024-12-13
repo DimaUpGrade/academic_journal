@@ -67,7 +67,7 @@ class UserLogin(APIView):
             
             if user:
                 login(request, user)
-                return Response({'Token': Token.objects.get_or_create(user=user)[0].key}, status=status.HTTP_200_OK)
+                return Response({'Token': Token.objects.get_or_create(user=user)[0].key, 'first_name': user.first_name, 'last_name': user.last_name}, status=status.HTTP_200_OK)
         return Response({"Error:": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
 
 
