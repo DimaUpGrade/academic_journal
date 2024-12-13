@@ -1,6 +1,11 @@
 from django.shortcuts import get_object_or_404, render
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
+from django.contrib.auth.models import AnonymousUser
+
+from django.db.models import Q
+
+from datetime import datetime
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -27,6 +32,7 @@ from .models import Group
 from .models import Rank
 from .models import Lesson
 from .models import Subject
+from .models import Semester
 
 
 class UserRegistration(APIView):
@@ -80,35 +86,71 @@ class UserLogout(APIView):
 
 
 class GroupListAPIView(generics.ListAPIView):
-    queryset = Group.objects.all()
+    queryset = Group.objects.filter(is_active=True).order_by('title')
     serializer_class = GroupSerializer
     filter_backends = (DjangoFilterBackend, )
+    pagination_class = None
 
 
 class SubjectListAPIView(generics.ListAPIView):
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
     filter_backends = (DjangoFilterBackend, )
+    pagination_class = None
+    
+    def list(self, request, *args, **kwargs):
+        user = self.request.user
+        if isinstance(user, AnonymousUser):
+            return Response({})
+        else:
+            queryset = self.get_queryset().filter(teachers__in=[user])
+            serializer = self.get_serializer(queryset, many=True)
+        
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class SemesterListAPIView(generics.ListAPIView):
+    queryset = Semester.objects.all()
+    serializer_class = SemesterSerializer
+    filter_backends = (DjangoFilterBackend, )
+    pagination_class = None
+
+    def list(self, request, *args, **kwargs):
+        year = datetime.now().year
+        queryset = self.get_queryset().filter(Q(start_year=year) | Q(end_year=year))
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class LessonViewSet(viewsets.ModelViewSet):
     # Потестить отображение, семестр можно не возвращать обратно пользователю, как и группу
-    queryset = Lesson.objects.select_related('semester', 'subject', 'group').prefetch_related('visits', 'ranks')
+    queryset = Lesson.objects.select_related('semester', 'subject', 'group').prefetch_related('visits')
     serializer_class = LessonSerializer
     create_serializer_class = CreateLessonSerializer
     filter_backends = (DjangoFilterBackend, )
 
+    def create(self, request, *args, **kwargs):
+        user = self.request.user
+        if isinstance(user, AnonymousUser):
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            serializer = self.create_serializer_class(data=request.data)
+            if serializer.is_valid():
+                serializer.save(teacher=user)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response({'Bad Request': 'Invalid data'}, status=status.HTTP_400_BAD_REQUEST)
+
     def list(self, request, *args, **kwargs):
-        if request.GET.get('teacher') and request.GET.get('semester') and request.GET.get('group') and request.GET.get('subject'):
+        if request.GET.get('semester') and request.GET.get('group') and request.GET.get('subject'):
             queryset = self.get_queryset().filter(
-                teacher=request.GET.get('teacher'),
-                semester=request.GET.get('semester'),
-                group=request.GET.get('group'),
-                subject=request.GET.get('subject')
+                teacher=self.request.user,
+                semester__id=request.GET.get('semester'),
+                group__title=request.GET.get('group'),
+                subject__title=request.GET.get('subject')
                 )
             
             serializer = self.get_serializer(queryset, many=True)
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(status=status.HTTP_404_NOT_FOUND)
 

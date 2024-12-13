@@ -4,7 +4,9 @@ import swal from 'sweetalert';
 import { tokenIsSet } from '../service';
 
 
+// In Docker-container
 const API_URL = "http://localhost:10000";
+
 
 function defaultErrorHandler() {
     swal({
@@ -43,7 +45,6 @@ async function loginAccount(username_, password_) {
 }
 
 
-// WIP
 async function registrationAccount(username_, last_name_, first_name_, password_, email_) {
     let result;
     result = await axios({
@@ -79,7 +80,6 @@ async function logout() {
         }
     })
         .then((response) => {
-            // delete this
             swal({
                 title: "Успешный выход!",
                 text: "Вы вышли из аккаунта!",
@@ -91,8 +91,6 @@ async function logout() {
                 localStorage.removeItem("first_name");
                 router.go();
             });
-            // alert("Успешный выход!");
-
         })
         .catch((error) => {
             if (error) {
@@ -108,10 +106,111 @@ async function logout() {
 }
 
 
+async function getGroups() {
+    let result;
+
+    result = await axios({
+        method: 'get',
+        url: `${API_URL}/api/groups/`,
+    })
+        .then(response => result = response)
+        .catch((error) => {
+            swal(error.response.status);
+        })
+    
+    return result.data;
+}
+
+
+async function getSemesters() {    
+    let result;
+
+    result = await axios({
+        method: 'get',
+        url: `${API_URL}/api/semesters/`,
+    })
+        .then(response => result = response)
+        .catch((error) => {
+            swal(error.response.status);
+        })
+    
+    return result.data;
+}
+
+
+async function getSubjects() {
+    let result;
+    if (tokenIsSet()) {
+        result = await axios({
+            method: 'get',
+            url: `${API_URL}/api/subjects/`,
+            headers: {
+                'Authorization': 'Token ' + localStorage.getItem("token")
+            }
+        })
+            .then(response => result = response)
+            .catch((error) => {
+                swal(error.response.status);
+            })
+    }
+    else {
+        result.data = {}
+    }
+    return result.data;
+}
+
+
+async function getLessons(group, subject, semester_id) {
+    let result;
+    if (tokenIsSet()) {
+        result = await axios({
+            method: 'get',
+            url: `${API_URL}/api/lessons/?group=${group}&subject=${subject}&semester=${semester_id}`,
+            headers: {
+                'Authorization': 'Token ' + localStorage.getItem("token")
+            }
+        })
+            .then(response => result = response)
+            .catch((error) => {
+                swal(error.response.status);
+            })
+    }
+    else {
+        result.data = {}
+    }
+    return result.data;
+}
+
+
+async function getOneLesson(params) {
+
+}
+
+
+async function getStudentsByGroup(params) {
+
+}
+
+
+async function postNewLesson(params) {
+
+}
+
+
+async function postVisitsAndRates(params) {
+
+}
+
+
+
 export {
     API_URL,
     axios,
     loginAccount,
     registrationAccount,
-    logout
+    logout,
+    getGroups,
+    getSubjects,
+    getSemesters,
+    getLessons
 }

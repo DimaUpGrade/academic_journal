@@ -96,6 +96,9 @@ export default{
     justify-content: center;
     background-color: var(--amethyst);
     color: var(--white-smoke);
+    
+    font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    font: 25px;
     padding: 50px 70px 100px 70px;
     border-radius: 10px;
   }
