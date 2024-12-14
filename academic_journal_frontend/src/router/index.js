@@ -4,6 +4,7 @@ import RegistrationView from '@/views/RegistrationView.vue'
 import LoginView from '@/views/LoginView.vue'
 import LessonsListView from "@/views/LessonsListView.vue"
 import LessonView from '@/views/LessonView.vue'
+import CreateLessonView from '@/views/CreateLessonView.vue'
 
 
 const routes = [
@@ -31,6 +32,11 @@ const routes = [
     path: '/lessons/:id',
     name: 'lesson',
     component: LessonView,
+  },
+  {
+    path: '/lessons/new',
+    name: 'new_lesson',
+    component: CreateLessonView,
   },
 ]
 

@@ -142,4 +142,19 @@ export default{
     font-family: 'Times New Roman', Times, serif;
     padding: 1vh 1vw;
   }
+
+  .default-start-div {
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    gap: 5px;
+  }
+
+  .default-center-div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
 </style>

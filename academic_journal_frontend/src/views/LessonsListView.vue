@@ -3,6 +3,10 @@
         <h1>Академический журнал</h1>
         <h2>{{ `${subject}, ${group}` }}</h2>
         <br>
+        <div class="default-center-div">
+            <button @click="goToCreateNewLesson" class="default-button">Создать новое занятие</button>
+        </div>
+        <br>
         <h3 v-if="lessons != null" v-for="lesson in lessons" @click="goToLesson(lesson.id)" class="lesson-title-in-list">{{ `Занятие от ${lesson.date}, ${getDayOfWeekMethod(lesson.date)}` }}</h3>
     </div>
 </template>
@@ -24,9 +28,16 @@ import { getDayOfWeek } from '@/service';
         methods: {
             goToLesson(id) {
                 router.push(`/lessons/${id}`);
-            },
+                // router.push({path: `/lessons/${id}`, query: {
+                //     group: this.group,
+                //     subject: this.subject,
+                // }});
+            },  
             getDayOfWeekMethod(date) {
                 return getDayOfWeek(date);
+            },
+            goToCreateNewLesson() {
+                router.push({path: `/lessons/new`, query: {group: this.group, subject: this.subject, semester: this.semester_id}})
             }
         },
         async created() {

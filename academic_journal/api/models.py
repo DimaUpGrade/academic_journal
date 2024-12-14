@@ -33,7 +33,7 @@ class Group(models.Model):
 
 
 class Subject(models.Model):
-    title = models.CharField(max_length=40)
+    title = models.CharField(max_length=60)
     teachers = models.ManyToManyField("auth.User", related_name="subject_teachers")
 
     def __str__(self):

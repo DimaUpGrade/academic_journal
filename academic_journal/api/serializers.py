@@ -42,6 +42,12 @@ class UsernameSerializer(serializers.ModelSerializer):
         fields = ('username',)
 
 
+class UserPartialSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('username', 'first_name', 'last_name',)
+
+
 class UserFullSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -58,7 +64,7 @@ class StudentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Student
         group = GroupSerializer(many=False, read_only=False)
-        fields = ('firstname', 'lastname', 'group')
+        fields = ('firstname', 'lastname', 'group',)
         
 
 class SubjectSerializer(serializers.ModelSerializer):
@@ -68,31 +74,33 @@ class SubjectSerializer(serializers.ModelSerializer):
 
 
 class RankSerializer(serializers.ModelSerializer):
+    student = StudentSerializer(many=False, read_only=False)
+
     class Meta:
         model = Rank
-        fields = "__all__"
-
-
-class LessonSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Lesson
-        visits = StudentSerializer(many=True, read_only=False)
-        teacher = UserFullSerializer(many=False, read_only=False)
-        subject = SubjectSerializer(many=False, read_only=False)
-        fields = ("id", "teacher", "subject", "visits", "date", "order_in_day")
-
-        
-class CreateLessonSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Lesson
-        subject = SubjectSerializer(many=False, read_only=False)
-        fields = ("teacher", "subject", "date", "order_in_day")
+        fields = ("student", "rank",)
 
 
 class SemesterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Semester
         fields = "__all__"
+
+
+class LessonSerializer(serializers.ModelSerializer):
+    visits = StudentSerializer(many=True, read_only=False)
+    teacher = UserPartialSerializer(many=False, read_only=False)
+    subject = SubjectSerializer(many=False, read_only=False)    
+    
+    class Meta:
+        model = Lesson
+        fields = ("id", "teacher", "subject", "visits", "date", "order_in_day",)
+
+        
+class CreateLessonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Lesson
+        fields = ("date", "order_in_day",)
 
 
 # class CreateRankSerializer(serializers.ModelSerializer):

@@ -117,12 +117,12 @@ async function getGroups() {
         .catch((error) => {
             swal(error.response.status);
         })
-    
+
     return result.data;
 }
 
 
-async function getSemesters() {    
+async function getSemesters() {
     let result;
 
     result = await axios({
@@ -133,7 +133,7 @@ async function getSemesters() {
         .catch((error) => {
             swal(error.response.status);
         })
-    
+
     return result.data;
 }
 
@@ -192,8 +192,43 @@ async function getStudentsByGroup(params) {
 }
 
 
-async function postNewLesson(params) {
+async function createLesson(date_, order_in_day_, group_, subject_, semester_id_) {
+    let result;
 
+    result = await axios({
+        method: 'post',
+        url: `${API_URL}/api/lessons/`,
+        headers: {
+            'Authorization': 'Token ' + localStorage.getItem("token")
+        },
+        data: {
+            date: date_,
+            order_in_day: order_in_day_,
+            group: group_,
+            subject: subject_,
+            semester_id: semester_id_
+        }
+    })
+        .then(() => {
+            swal({
+                title: "Занятие создано!",
+                text: 'Нажмите, "Ок" чтобы перейти к занятиям',
+                type: "success"
+            }).then(function () {
+                router.push({path: `/lessons/`, query: {group: group_, subject: subject_, semester: semester_id_}})
+            });
+        })
+        .catch((error) => {
+            if (error) {
+                swal({
+                    title: "Произошла ошибка!",
+                    text: "Что-то пошло не так...",
+                    type: "success"
+                }).then(function () {
+                    
+                });
+            }
+        })
 }
 
 
@@ -212,5 +247,6 @@ export {
     getGroups,
     getSubjects,
     getSemesters,
-    getLessons
+    getLessons,
+    createLesson
 }

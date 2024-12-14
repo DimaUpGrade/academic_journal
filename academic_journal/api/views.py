@@ -135,10 +135,27 @@ class LessonViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
         else:
             serializer = self.create_serializer_class(data=request.data)
+
             if serializer.is_valid():
-                serializer.save(teacher=user)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                date = serializer.data.get('date')
+                order_in_day = serializer.data.get('order_in_day')
+
+                group_title = request.data["group"]
+                subject_title = request.data["subject"]
+                semester_id = int(request.data["semester_id"])
+                
+                group = Group.objects.get(title=group_title)
+                subject = Subject.objects.get(title=subject_title)
+                semester = Semester.objects.get(id=semester_id)
+
+                lesson = Lesson(date=date, order_in_day=order_in_day, semester=semester, subject=subject, teacher=user, group=group)
+                lesson.save()
+                
+                return Response(status=status.HTTP_201_CREATED)
         return Response({'Bad Request': 'Invalid data'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # def update(self, request, *args, **kwargs):
+    #     return super().update(request, *args, **kwargs)
 
     def list(self, request, *args, **kwargs):
         if request.GET.get('semester') and request.GET.get('group') and request.GET.get('subject'):
@@ -147,7 +164,7 @@ class LessonViewSet(viewsets.ModelViewSet):
                 semester__id=request.GET.get('semester'),
                 group__title=request.GET.get('group'),
                 subject__title=request.GET.get('subject')
-                )
+                ).order_by('-date')
             
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
