@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework import generics, status, viewsets
+from rest_framework.decorators import action
 
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -26,6 +27,7 @@ from .serializers import StudentSerializer
 from .serializers import SubjectSerializer
 from .serializers import SemesterSerializer
 from .serializers import CreateLessonSerializer
+from .serializers import CreateRankSerializer
 
 from .models import Student
 from .models import Group
@@ -123,7 +125,6 @@ class SemesterListAPIView(generics.ListAPIView):
 
 
 class LessonViewSet(viewsets.ModelViewSet):
-    # Потестить отображение, семестр можно не возвращать обратно пользователю, как и группу
     queryset = Lesson.objects.select_related('semester', 'subject', 'group').prefetch_related('visits')
     serializer_class = LessonSerializer
     create_serializer_class = CreateLessonSerializer
@@ -153,7 +154,7 @@ class LessonViewSet(viewsets.ModelViewSet):
                 
                 return Response(status=status.HTTP_201_CREATED)
         return Response({'Bad Request': 'Invalid data'}, status=status.HTTP_400_BAD_REQUEST)
-
+    
     # def update(self, request, *args, **kwargs):
     #     return super().update(request, *args, **kwargs)
 
@@ -171,11 +172,61 @@ class LessonViewSet(viewsets.ModelViewSet):
         else:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-    # def retrieve(self, request, *args, **kwargs):
-    #     pk = self.kwargs.get("pk")
-    #     lesson = get_object_or_404(Lesson, pk=pk)
+    def retrieve(self, request, *args, **kwargs):
+        pk = self.kwargs.get("pk")
+        lesson = get_object_or_404(Lesson, pk=pk)
+        serializer = self.get_serializer(lesson)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-        
-        
+
+class RankViewSet(viewsets.ModelViewSet):
+    queryset = Rank.objects.select_related('student', 'lesson')
+    serializer_class = RankSerializer
+    create_serializer_class = CreateRankSerializer
+    filter_backends = (DjangoFilterBackend, )
+    pagination_class = None
+
+    # def create(self, request, *args, **kwargs):
+    #     return super().create(request, *args, **kwargs)
+
+    def list(self, request, *args, **kwargs):
+        if request.GET.get('lesson_id'):
+            # Оценки за занятие
+            lesson_id = int(request.GET.get('lesson_id'))
+            queryset = self.get_queryset().filter(lesson__id=lesson_id)
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        if request.GET.get('semester_id') and request.GET.get('subject_title'):
+            semester_id = int(request.GET.get('semester_id'))
+            subject_title = request.GET.get('subject_title')
+            if request.GET.get('student_id'):
+                # Оценки одного студента по предмету за семестр
+                student_id = request.GET.get('student_id')
+                queryset = self.get_queryset().filter(student__id=student_id, lesson__semester__id=semester_id, lesson__subject__title=subject_title)
+            elif request.GET.get('group_title'):
+                # Оценки группы за весь семестр
+                group_title = request.GET.get('group_title')
+                queryset = self.get_queryset().filter(lesson__semester__id=semester_id, lesson__subject__title=subject_title, lesson__group__id=group_title)
+            else:
+                queryset = self.get_queryset().filter(lesson__semester__id=semester_id, lesson__subject__title=subject_title)
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class StudentListAPIView(generics.ListAPIView):
+    queryset = Student.objects.all()
+    serializer_class = StudentSerializer
+    filter_backends = (DjangoFilterBackend, )
+    pagination_class = None
+
+    def list(self, request, *args, **kwargs):
+        if request.GET.get('group_title'):
+            group_title = request.GET.get('group_title')
+            queryset = self.get_queryset().filter(group__title=group_title).order_by("lastname")
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({'Bad request': 'group not specified'}, status=status.HTTP_400_BAD_REQUEST)
         
 

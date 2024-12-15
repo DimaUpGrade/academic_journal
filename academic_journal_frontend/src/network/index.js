@@ -182,13 +182,33 @@ async function getLessons(group, subject, semester_id) {
 }
 
 
-async function getOneLesson(params) {
+async function getRanksForLesson(lesson_id) {
+    let result;
+        result = await axios({
+            method: 'get',
+            url: `${API_URL}/api/ranks/?lesson_id=${lesson_id}`,
+        })
+            .then(response => result = response)
+            .catch((error) => {
+                swal(error.response.status);
+            })
 
+    return result.data;
 }
 
 
-async function getStudentsByGroup(params) {
+async function getStudentsByGroup(group_title) {
+    let result;
+        result = await axios({
+            method: 'get',
+            url: `${API_URL}/api/students/?group_title=${group_title}`,
+        })
+            .then(response => result = response)
+            .catch((error) => {
+                swal(error.response.status);
+            })
 
+    return result.data;
 }
 
 
@@ -219,21 +239,26 @@ async function createLesson(date_, order_in_day_, group_, subject_, semester_id_
             });
         })
         .catch((error) => {
-            if (error) {
-                swal({
-                    title: "Произошла ошибка!",
-                    text: "Что-то пошло не так...",
-                    type: "success"
-                }).then(function () {
-                    
-                });
-            }
-        })
+            defaultErrorHandler()
+        });
 }
 
 
-async function postVisitsAndRates(params) {
+async function getLesson(id) {
+    let result;
 
+    result = await axios({
+        method: 'get',
+        url: `${API_URL}/api/lessons/${id}/`,
+        headers: {
+            'Authorization': 'Token ' + localStorage.getItem("token")
+        },
+    })
+    .catch((error) => {
+        defaultErrorHandler()
+    });
+
+    return result.data;
 }
 
 
@@ -248,5 +273,8 @@ export {
     getSubjects,
     getSemesters,
     getLessons,
-    createLesson
+    createLesson,
+    getRanksForLesson,
+    getStudentsByGroup,
+    getLesson
 }

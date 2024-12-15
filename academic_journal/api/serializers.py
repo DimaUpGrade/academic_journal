@@ -63,8 +63,7 @@ class GroupSerializer(serializers.ModelSerializer):
 class StudentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Student
-        group = GroupSerializer(many=False, read_only=False)
-        fields = ('firstname', 'lastname', 'group',)
+        fields = ('id', 'firstname', 'lastname',)
         
 
 class SubjectSerializer(serializers.ModelSerializer):
@@ -81,6 +80,12 @@ class RankSerializer(serializers.ModelSerializer):
         fields = ("student", "rank",)
 
 
+class CreateRankSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rank
+        fields = ("rank",)
+
+
 class SemesterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Semester
@@ -90,11 +95,12 @@ class SemesterSerializer(serializers.ModelSerializer):
 class LessonSerializer(serializers.ModelSerializer):
     visits = StudentSerializer(many=True, read_only=False)
     teacher = UserPartialSerializer(many=False, read_only=False)
-    subject = SubjectSerializer(many=False, read_only=False)    
+    subject = SubjectSerializer(many=False, read_only=False)
+    group = GroupSerializer(many=False, read_only=False)    
     
     class Meta:
         model = Lesson
-        fields = ("id", "teacher", "subject", "visits", "date", "order_in_day",)
+        fields = ("id", "teacher", "subject", "group", "visits", "date", "order_in_day",)
 
         
 class CreateLessonSerializer(serializers.ModelSerializer):

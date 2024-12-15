@@ -6,6 +6,7 @@ from rest_framework.routers import DefaultRouter
 router = DefaultRouter()
 
 router.register(r'lessons', LessonViewSet, basename='lesson')
+router.register(r'ranks', RankViewSet, basename='rank')
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -16,4 +17,5 @@ urlpatterns = [
     path('groups/', GroupListAPIView.as_view(), name='groups'),
     path('subjects/', SubjectListAPIView.as_view(), name='subjects'),
     path('semesters/', SemesterListAPIView.as_view(), name='semesters'),
+    path('students/', StudentListAPIView.as_view(), name='students'),
 ]
