@@ -292,9 +292,5 @@ class GroupReportAPIView(APIView):
                 format = "%m.%d.%Y"        
                 lesson['date'] = lesson['date'].strftime(format)
                 lessons.append(lesson)
-            
-
-        print()
-        print(lessons)
-        print()
+                
         return Response({'lessons': lessons, 'students': students.data, 'group': request.GET.get('group'), 'subject': request.GET.get('subject'), 'semester': semester_name})
