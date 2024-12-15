@@ -229,17 +229,27 @@ async function createLesson(date_, order_in_day_, group_, subject_, semester_id_
             semester_id: semester_id_
         }
     })
-        .then(() => {
+        .then((obj_) => {
             swal({
                 title: "Занятие создано!",
-                text: 'Нажмите, "Ок" чтобы перейти к занятиям',
+                text: 'Вы будете перенаправлены на страницу занятия!',
                 type: "success"
             }).then(function () {
-                router.push({path: `/lessons/`, query: {group: group_, subject: subject_, semester: semester_id_}})
+                router.push(`/lessons/${obj_.data.lesson_id}`);
             });
         })
         .catch((error) => {
-            defaultErrorHandler()
+            if (error.status == 400) {
+                alert(Object.keys(error.response));
+                swal({
+                    title: "Занятие уже существует!",
+                    text: "Вы будете перенаправлены на страницу занятия!",
+                    type: "success"
+                }).then(function () {
+                    router.push(`/lessons/${error.response.data.lesson_id}`);
+                });
+            }
+            
         });
 }
 
@@ -262,6 +272,43 @@ async function getLesson(id) {
 }
 
 
+async function postRanks(ranks) {
+    let result;
+
+    result = await axios({
+        method: 'post',
+        url: `${API_URL}/api/ranks/`,
+        headers: {
+            'Authorization': 'Token ' + localStorage.getItem("token")
+        },
+        data: {
+            ranks,
+        }
+    })
+    .catch((error) => {
+        defaultErrorHandler()
+    });
+}
+
+
+async function postVisits(visits_, id) {
+    let result;
+
+    result = await axios({
+        method: 'patch',
+        url: `${API_URL}/api/lessons/${visits_, id}/`,
+        headers: {
+            'Authorization': 'Token ' + localStorage.getItem("token")
+        },
+        data: {
+            visits: visits_
+        }
+    })
+    .catch((error) => {
+        defaultErrorHandler()
+    });
+}
+
 
 export {
     API_URL,
@@ -276,5 +323,7 @@ export {
     createLesson,
     getRanksForLesson,
     getStudentsByGroup,
-    getLesson
+    getLesson,
+    postRanks,
+    postVisits
 }

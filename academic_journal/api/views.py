@@ -5,13 +5,15 @@ from django.contrib.auth.models import AnonymousUser
 
 from django.db.models import Q
 
+from django.forms.models import model_to_dict
+
 from datetime import datetime
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework import generics, status, viewsets
-from rest_framework.decorators import action
+from rest_framework.renderers import TemplateHTMLRenderer
 
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -136,27 +138,37 @@ class LessonViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
         else:
             serializer = self.create_serializer_class(data=request.data)
-
             if serializer.is_valid():
                 date = serializer.data.get('date')
                 order_in_day = serializer.data.get('order_in_day')
-
                 group_title = request.data["group"]
                 subject_title = request.data["subject"]
                 semester_id = int(request.data["semester_id"])
-                
                 group = Group.objects.get(title=group_title)
                 subject = Subject.objects.get(title=subject_title)
                 semester = Semester.objects.get(id=semester_id)
-
-                lesson = Lesson(date=date, order_in_day=order_in_day, semester=semester, subject=subject, teacher=user, group=group)
-                lesson.save()
-                
-                return Response(status=status.HTTP_201_CREATED)
+                try:
+                    lesson = Lesson.objects.get(date=date, order_in_day=order_in_day, semester=semester, subject=subject, teacher=user, group=group)
+                    return Response({'Bad Request': 'This lesson is already exists!', 'lesson_id': lesson.id}, status=status.HTTP_400_BAD_REQUEST)
+                except Lesson.DoesNotExist:
+                    lesson = Lesson(date=date, order_in_day=order_in_day, semester=semester, subject=subject, teacher=user, group=group)
+                    lesson.save()
+                    return Response({'lesson_id': lesson.id}, status=status.HTTP_201_CREATED)
         return Response({'Bad Request': 'Invalid data'}, status=status.HTTP_400_BAD_REQUEST)
     
-    # def update(self, request, *args, **kwargs):
-    #     return super().update(request, *args, **kwargs)
+    def partial_update(self, request, pk):
+        lesson = Lesson.objects.get(id=pk)
+        current_visits = lesson.visits.all()
+        for visit in request.data.get('visits'):
+            student = Student.objects.get(id=visit['student_id'])
+            if visit['visited']:
+                if student not in current_visits:
+                    lesson.visits.add(student)
+            else:
+                if student in current_visits:
+                    lesson.visits.remove(student)
+        lesson.save()
+        return Response(status=status.HTTP_200_OK)
 
     def list(self, request, *args, **kwargs):
         if request.GET.get('semester') and request.GET.get('group') and request.GET.get('subject'):
@@ -165,8 +177,7 @@ class LessonViewSet(viewsets.ModelViewSet):
                 semester__id=request.GET.get('semester'),
                 group__title=request.GET.get('group'),
                 subject__title=request.GET.get('subject')
-                ).order_by('-date')
-            
+                ).order_by('-date', '-order_in_day')
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
@@ -186,8 +197,24 @@ class RankViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend, )
     pagination_class = None
 
-    # def create(self, request, *args, **kwargs):
-    #     return super().create(request, *args, **kwargs)
+    def create(self, request, *args, **kwargs):
+        for data in request.data.get('ranks'):
+            serializer = self.create_serializer_class(data)
+            lesson_id = data['lesson_id']
+            student_id = data['student_id']
+            rank = serializer.data.get('rank')
+            try:
+                rank_object = Rank.objects.get(lesson__id=lesson_id, student__id=student_id)
+                if not rank:
+                    rank_object.delete()
+                    continue
+                rank_object.rank = rank
+            except Rank.DoesNotExist:
+                if not rank:
+                    continue
+                rank_object = Rank(lesson=Lesson.objects.get(id=lesson_id), student=Student.objects.get(id=student_id), rank=rank)
+            rank_object.save()
+        return Response(status=status.HTTP_200_OK)
 
     def list(self, request, *args, **kwargs):
         if request.GET.get('lesson_id'):
@@ -230,3 +257,44 @@ class StudentListAPIView(generics.ListAPIView):
         return Response({'Bad request': 'group not specified'}, status=status.HTTP_400_BAD_REQUEST)
         
 
+class GroupReportAPIView(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = 'api/group_report.html'
+
+    def get(self, request):
+        if request.GET.get('semester') and request.GET.get('group') and request.GET.get('subject'):
+            semester = Semester.objects.get(id=int(request.GET.get('semester')))
+            semester_name = f'{semester.semester_number}-й семестр, {semester.start_year}-{semester.end_year} уч. г.'
+            
+            lessons_queryset = Lesson.objects.filter(group__title=request.GET.get('group'), semester__id=request.GET.get('semester'), subject__title=request.GET.get('subject')).order_by('date', 'order_in_day')
+            students_queryset = Student.objects.filter(group__title=request.GET.get('group'))
+            students = StudentSerializer(students_queryset, many=True)
+            lessons_ranks = dict()
+            for lesson in lessons_queryset:
+                lessons_ranks[lesson.id] = lesson.lesson_rank.all()
+
+            lessons = []
+
+            for lesson_id, lesson_ranks in lessons_ranks.items():
+                lesson = model_to_dict(lessons_queryset.get(id=lesson_id))
+                lesson['ranks'] = dict()
+
+                for lesson_rank in lesson_ranks:
+                    lesson['ranks'][lesson_rank.student.id] = model_to_dict(lesson_rank)['rank']
+
+                if lesson['visits']:
+                    visits = lesson['visits']
+                    lesson['visits'] = []
+                    for visit in visits:
+                        visit = model_to_dict(visit)
+                        lesson['visits'].append(visit['id'])
+                
+                format = "%m.%d.%Y"        
+                lesson['date'] = lesson['date'].strftime(format)
+                lessons.append(lesson)
+            
+
+        print()
+        print(lessons)
+        print()
+        return Response({'lessons': lessons, 'students': students.data, 'group': request.GET.get('group'), 'subject': request.GET.get('subject'), 'semester': semester_name})

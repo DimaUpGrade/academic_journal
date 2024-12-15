@@ -18,4 +18,5 @@ urlpatterns = [
     path('subjects/', SubjectListAPIView.as_view(), name='subjects'),
     path('semesters/', SemesterListAPIView.as_view(), name='semesters'),
     path('students/', StudentListAPIView.as_view(), name='students'),
+    path('reports/group_report/', GroupReportAPIView.as_view(), name='group_report'),
 ]

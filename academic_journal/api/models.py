@@ -66,7 +66,7 @@ class Student(models.Model):
 class Rank(models.Model):
     lesson = models.ForeignKey("Lesson", related_name="lesson_rank", on_delete=models.CASCADE, default=None)
     student = models.ForeignKey("Student", related_name="student_rank", on_delete=models.CASCADE)
-    rank = models.IntegerField()
+    rank = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.student}, {self.rank}"
